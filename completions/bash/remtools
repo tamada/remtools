@@ -1,0 +1,42 @@
+__remrem_completions()
+{
+    local cur prev cword
+    _get_comp_words_by_ref -n : cur prev cword
+
+    if [[ "$cur" =~ ^\- ]]; then
+        COMPREPLY=($(compgen -W "-h --help -V --version -i --inquiry" -- ${cur}))
+    fi
+}
+
+__lsrem_completions()
+{
+    local cur prev cword
+    _get_comp_words_by_ref -n : cur prev cword
+
+    if [[ "$cur" =~ ^\- ]]; then
+        COMPREPLY=($(compgen -W "-h --help -V --version -a --all -l --long-format" -- ${cur}))
+    fi
+}
+
+__rem_completions()
+{
+    local cur prev cword
+    _get_comp_words_by_ref -n : cur prev cword
+
+    if [[ "$cur" =~ ^\- ]]; then
+        COMPREPLY=($(compgen -W "-h --help -V --version -a --all -i --inquiry -r --recursive -v --verbose -d --dry-run" -- ${cur}))
+    else
+        COMPREPLY=($(compgen -d" -- ${cur}))
+    fi
+}
+
+__cdrrh_completions() {
+    local opts cur prev subcom
+    _get_comp_words_by_ref -n : cur prev cword
+    repos="$(__rrh_repositories)"
+    COMPREPLY+=($(compgen -W "$repos" -- "${cur}"))
+}
+
+complete -F __rem_completions    rem
+complete -F __lsrem_completions  lsrem
+complete -F __remrem_completions remrem
