@@ -1,3 +1,7 @@
+cmd/rem/rem
+cmd/lsrem/lsrem
+cmd/remrem/remrem
+
 ### https://raw.github.com/github/gitignore/475f63beb5815372181a0c93262517cd2a05214e/Global/macOS.gitignore
 
 # General
@@ -91,5 +95,24 @@ flycheck_*.el
 # network security
 /network-security.data
 
+
+
+### https://raw.github.com/github/gitignore/475f63beb5815372181a0c93262517cd2a05214e/Go.gitignore
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
 
 

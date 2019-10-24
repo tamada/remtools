@@ -8,22 +8,24 @@ LDFLAGS := -X 'main.version=$(VERSION)'
 all: test build
 
 update_version:
-	@for i in README.md docs/content/_index.md; do\
+	@for i in README.md; do\
 	    sed -e 's!Version-[0-9.]*-yellowgreen!Version-${VERSION}-yellowgreen!g' -e 's!tag/v[0-9.]*!tag/v${VERSION}!g' $$i > a ; mv a $$i; \
 	done
 
-	@sed 's/const VERSION = .*/const VERSION = "${VERSION}"/g' common/config.go > a
-	@mv a common/config.go
+	@sed 's/const VERSION = .*/const VERSION = "${VERSION}"/g' context.go > a
+	@mv a context.go
 	@echo "Replace version to \"${VERSION}\""
 
-setup: deps update_version
+setup: update_version
 	git submodule update --init
 
-test: setup format lint
+test: setup
 	$(GO) test -covermode=count -coverprofile=coverage.out $$(go list ./... | grep -v vendor)
 
 build: setup
-	$(GO) build -o $(NAME) -v
+	cd cmd/rem    ; go build -o "rem" -v
+	cd cmd/lsrem  ; go build -o "lsrem" -v
+	cd cmd/remrem ; go build -o "remrem" -v
 
 lint: setup
 	$(GO) vet $$(go list ./... | grep -v vendor)
