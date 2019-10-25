@@ -1,0 +1,8 @@
+{
+  "follow-symlink": true,
+  "exit-on-error": true,
+  "patterns": [
+    ".*\\~$",
+    ".*\\.bak$"
+  ]
+}

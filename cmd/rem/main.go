@@ -53,15 +53,15 @@ func isHelpOrVersion(opts *options) bool {
 	return opts.helpFlag || opts.versionFlag
 }
 
-func isSymlinkAndFollowIt(mode os.FileMode, context *remtools.Context) bool {
+func isSymlinkAndFollowIt(mode os.FileMode, config *remtools.Config) bool {
 	if mode&os.ModeSymlink == os.ModeSymlink {
-		return context.IsFollowSymlink()
+		return config.IsFollowSymlink()
 	}
 	return false
 }
 
 func forceVerbose(event, fileName string, opts *options) {
-	fmt.Printf("%-7s    %s\n", event, fileName)
+	fmt.Printf("%-8s    %s\n", event, fileName)
 }
 
 func verbose(event, fileName string, opts *options) {
@@ -70,7 +70,7 @@ func verbose(event, fileName string, opts *options) {
 	}
 }
 
-func moveToTrash(name string, opts *options, context *remtools.Context) {
+func moveToTrash(name string, opts *options, context remtools.Context) {
 	if opts.dryRunFlag {
 		verbose("dry run", name, opts)
 		return
@@ -79,15 +79,18 @@ func moveToTrash(name string, opts *options, context *remtools.Context) {
 		forceVerbose("decline", name, opts)
 		return
 	}
-	if opts.verboseFlag {
-		verbose("move", name, opts)
+	if context.Move(name) {
+		if opts.verboseFlag {
+			verbose("move", name, opts)
+		}
+	} else {
+		forceVerbose("movefail", name, opts)
 	}
-	context.Move(name)
 }
 
-func isRemTarget(file os.FileInfo, opts *options, context *remtools.Context) bool {
+func isRemTarget(file os.FileInfo, opts *options, config *remtools.Config) bool {
 	var name = file.Name()
-	for _, pattern := range context.Patterns {
+	for _, pattern := range config.Patterns {
 		result := pattern.MatchString(name)
 		// fmt.Printf("%-7s    %s (%v) %v\n", "regexp", name, pattern, result)
 		if result {
@@ -97,16 +100,18 @@ func isRemTarget(file os.FileInfo, opts *options, context *remtools.Context) boo
 	return false
 }
 
-func remEachEntry(dir string, file os.FileInfo, opts *options, context *remtools.Context) error {
+func remEachEntry(dir string, file os.FileInfo, opts *options, context remtools.Context, config *remtools.Config) error {
 	fileName := file.Name()
 	targetPath := filepath.Join(dir, fileName)
-	if file.IsDir() && opts.recursiveFlag {
-		return performEachDir(targetPath, opts, context)
-	} else if isSymlinkAndFollowIt(file.Mode(), context) {
-		return performEachDir(targetPath, opts, context)
+	if opts.recursiveFlag {
+		if file.IsDir() {
+			return performEachDir(targetPath, opts, context, config)
+		} else if isSymlinkAndFollowIt(file.Mode(), config) {
+			return performEachDir(targetPath, opts, context, config)
+		}
 	}
 	verbose("check", targetPath, opts)
-	if isRemTarget(file, opts, context) {
+	if isRemTarget(file, opts, config) {
 		moveToTrash(targetPath, opts, context)
 	}
 	return nil
@@ -122,35 +127,32 @@ func isTargetFile(file string, opts *options) bool {
 	return true
 }
 
-func doRem(dir string, opts *options, context *remtools.Context) error {
-	verbose("readdir", dir, opts)
-	files, err := ioutil.ReadDir(dir)
+func performEachDir(arg string, opts *options, context remtools.Context, config *remtools.Config) error {
+	verbose("readdir", arg, opts)
+	files, err := ioutil.ReadDir(arg)
 	if err != nil {
 		return err
 	}
 	for _, file := range files {
 		if isTargetFile(file.Name(), opts) {
-			remEachEntry(dir, file, opts, context)
+			remEachEntry(arg, file, opts, context, config)
 		}
 	}
 
 	return nil
 }
 
-func performEachDir(arg string, opts *options, context *remtools.Context) error {
-	// dir, err := filepath.Abs(arg)
-	return doRem(arg, opts, context)
-}
-
 var errlist = []error{}
 
 func perform(opts *options) int {
 	context := remtools.NewContext()
+	config := new(remtools.Config)
+	config.Initialize()
 	for _, arg := range opts.args {
-		err := performEachDir(arg, opts, context)
+		err := performEachDir(arg, opts, context, config)
 		if err != nil {
 			errlist = append(errlist, err)
-			if context.IsExitOnError() {
+			if config.IsExitOnError() {
 				return 1
 			}
 		}

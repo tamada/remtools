@@ -16,42 +16,32 @@ type options struct {
 
 func buildFlagSet() (*flag.FlagSet, *options) {
 	var options = options{}
-	var flag = flag.NewFlagSet("remrem", flag.ContinueOnError)
-	flag.Usage = func() { fmt.Println(getHelpMessage()) }
+	var flag = flag.NewFlagSet("mer", flag.ContinueOnError)
+	flag.Usage = func() { fmt.Println(getHelpMessage("mer")) }
 	flag.BoolVarP(&options.inquiryFlag, "inquiry", "i", false, "inquiry mode")
 	flag.BoolVarP(&options.versionFlag, "version", "v", false, "print version")
 	flag.BoolVarP(&options.helpFlag, "help", "h", false, "print this message")
 	return flag, &options
 }
 
-func getHelpMessage() string {
-	return `remrem [OPTIONS]
+func getHelpMessage(prog string) string {
+	return fmt.Sprintf(`%s [OPTIONS]
 OPTIONS
     -i, --inquiry    inquiry mode.
-
-    -v, --version    print version.
-    -h, --help       print this message.`
-}
-
-func getVersion(prog string) string {
-	return fmt.Sprintf("%s version %s", prog, remtools.VERSION)
+    -h, --help       print this message.
+    -V, --Version    print version.`, prog)
 }
 
 func performImpl(args []string, opts *options) int {
-	if opts.inquiryFlag && !remtools.AskToUser("trash", "empty trash?") {
-		return 0
-	}
-	context := remtools.NewContext()
-	context.EmptyTrash()
 	return 0
 }
 
 func perform(args []string, opts *options) int {
 	if opts.versionFlag {
-		fmt.Println(remtools.GetVersion("remrem"))
+		fmt.Printf(remtools.GetVersion("mer"))
 	}
 	if opts.helpFlag {
-		fmt.Println(getHelpMessage())
+		fmt.Printf(getHelpMessage("mer"))
 	}
 	if opts.versionFlag || opts.helpFlag {
 		return 0
@@ -62,7 +52,7 @@ func perform(args []string, opts *options) int {
 func goMain(args []string) int {
 	var flagset, opts = buildFlagSet()
 	if err := flagset.Parse(args); err != nil {
-		fmt.Println(getHelpMessage())
+		fmt.Println(getHelpMessage("mer"))
 		return 1
 	}
 	return perform(flagset.Args(), opts)
